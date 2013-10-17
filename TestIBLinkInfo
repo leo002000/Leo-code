@@ -1,0 +1,129 @@
+#!/bin/bash
+#################################################################
+#     LE... V2.1 "TestIBLinkInfo" for correct activity sum      #
+#################################################################
+
+
+#Set the "$FabricT" to the correct amount of IB hardware (80 nodes x 2 connections =160) + (6 x 3) x 2 interconnections between switches)
+#The ibhost-list + ibhost-list2 files must be kept upto date with a list of IB hosts in the network/fabric
+
+function ib1()
+
+#<...Start Script...>
+{
+
+#Host ##cn170### needs to be online for this function to work, else change it to an ibnode which is online [cn105 ... cn193]
+
+
+ssh cn170 iblinkinfo > leot
+
+
+var=$(cat leot | grep Active | wc -l)
+
+#The total amount of IB equipment in the fabric
+FabricT=196
+
+if [ "$var" -lt "$FabricT" ]
+
+        then
+
+echo "A  problem has been detected...There should be $FabricT active connections... Not ...$var" 1>&2
+
+
+cat leot|awk '{print $13'} | grep cn | sort  > TempDump
+
+#sleep 1
+
+cat TempDump | sed  's/"//g' > leot
+
+ diff -a -b -B -d leot ibhost-list | grep cn
+
+        else
+
+if [ "$var" -gt "$FabricT" ]
+
+        then
+
+
+echo "The Ib Actual... $var... is greater than the Fabric Total variable... $FabricT...Increase FabricT to Actual" 1>&2
+
+        else
+
+if [ "$var" -eq "$FabricT" ]
+
+        then
+
+
+echo "Everything looks correct... [cn105 ... cn170] Fabric Total is... $FabricT which matches the Actual... $var..."
+fi
+fi
+fi
+rm -f leot
+rm -f TempDump
+
+}
+
+##############################################################################################################################################################################
+
+
+#ib2 Function
+
+function ib2()
+
+{
+#Host ###cn254### needs to be online for this  function to work, else change it to an ibnode which is online from range [cn254 ... cn301]
+
+
+ssh cn254 iblinkinfo > leot2
+
+
+var2=$(cat leot2 | grep Active | wc -l)
+
+#The total amount of IB equipment in the fabric [48 x 2] + 12 switch connections = 108
+FabricT2=108
+
+if [ "$var2" -lt "$FabricT2" ]
+
+        then
+
+echo "A  problem has been detected...There should be $FabricT2 active connections... Not ...$var2" 1>&2
+
+
+cat leot2|awk '{print $13'} | grep cn | sort  > TempDump2
+
+#sleep 1
+
+cat TempDump2 | sed  's/"//g' > leot2
+
+ diff -a -b -B -d leot2 ibhost-list2 | grep cn
+
+        else
+
+if [ "$var2" -gt "$FabricT2" ]
+
+        then
+
+
+echo "The Ib Actual... $var2... is greater than the Fabric Total variable... $FabricT2...Increase FabricT2 to Actual" 1>&2
+
+        else
+
+if [ "$var2" -eq "$FabricT2" ]
+
+        then
+
+
+echo "Everything looks correct... [cn254...cn301] Fabric Total is... $FabricT2 which matches the Actual... $var2..."
+fi
+fi
+fi
+rm -f leot2
+rm -f TempDump2
+
+}
+
+ib1
+ib2
+
+#Script End#>...
+
